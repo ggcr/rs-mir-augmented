@@ -1,0 +1,10 @@
+[package]
+name = "ownership-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+colored = "3.0.0"
+glob = "0.3.2"
+polars = { version = "0.46", features = ["json", "lazy"] }
