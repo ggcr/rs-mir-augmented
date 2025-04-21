@@ -1,0 +1,6 @@
+.DS_Store
+src/bin/
+data/
+test-data/
+progress.md
+target/
