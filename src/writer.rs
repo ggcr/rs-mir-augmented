@@ -7,7 +7,7 @@ pub fn write_bin(name: String, program: String) -> Result<String> {
     // In here we will write each correct sampled generation onto the `bin` dir.
 
     // Create binary path as: projroot/src/bin/<name>.rs
-    let bin_path = Path::new("./src/bin/").join(name.clone() + ".rs");
+    let bin_path = Path::new("./bin/").join(name.clone() + ".rs");
     if let Some(parent) = bin_path.parent() {
         fs::create_dir_all(parent)?; // src/bin/
     }
