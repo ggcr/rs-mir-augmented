@@ -4,7 +4,6 @@ mod sampler;
 mod writer;
 
 use colored::Colorize;
-use compile_mir::compile_mir;
 use glob::glob;
 use std::{
     env,
@@ -57,15 +56,12 @@ fn main() {
     let out_clean_mir = Path::new("./mir/");
     let mir_files: Vec<(String, String)> = binaries
         .iter()
-        .filter_map(|binpath| compile_mir(binpath, out_clean_mir).ok())
+        .filter_map(|binpath| compile_mir::compile_mir(binpath, out_clean_mir).ok())
         .collect();
 
     // Parse the mir and map it to the binary LOC
-    show(&mir_files);
-}
-
-fn show(tuple_files: &Vec<(String, String)>) {
-    for (bin, mir) in tuple_files {
-        println!("{} - {}", bin, mir);
+    for (bin_path, mir_path) in &mir_files {
+        let mir_map = parser::parse_mir(mir_path);
+        writer::write_mir_augmented(bin_path.clone(), mir_map);
     }
 }

@@ -17,8 +17,6 @@ pub fn compile_mir(binary: &String, dest_dir: &Path) -> Result<(String, String)>
         .arg("-Z")
         .arg("dump-mir=all")
         .arg(binary)
-        // .arg("-o")
-        // .arg("/tmp/")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()?;
