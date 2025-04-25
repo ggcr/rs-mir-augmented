@@ -29,12 +29,14 @@ fn main() {
 
     // TODO: Re-organize this in a better way
     // TODO: Use Options instead of Results
-    let generations: Vec<PathBuf> = glob(&pattern)
+    let mut generations: Vec<PathBuf> = glob(&pattern)
         .expect("Failed to read glob pattern")
-        .filter_map(Result::ok)
+        .filter_map(|path| path.ok()) // Result -> Option -> PathBuf
         .filter(|path| path.is_file() && path.extension() == Some(OsStr::new("json")))
-        // .take(1) // debugging
         .collect();
+
+    // debugging (remove this and remove the mutability)
+    generations.truncate(1);
 
     // Parses the vLLM JSON generation
     // Samples a correct generation per problem
@@ -42,9 +44,9 @@ fn main() {
     let binaries: Vec<String> = generations
         .iter()
         .filter_map(|path| {
-            let json = parser::parse_gen(path).ok()?;
-            let (problem_name, generation) = sampler::sample_gen(&json).ok()?;
-            writer::write_bin(problem_name, generation).ok()
+            let json = parser::parse_gen(path)?;
+            let (problem_name, generation) = sampler::sample_gen(&json)?;
+            writer::write_bin(problem_name, generation)
         })
         .collect();
 

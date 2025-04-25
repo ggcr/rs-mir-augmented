@@ -9,19 +9,33 @@ use std::{
 
 use anyhow::Result;
 
-pub fn write_bin(name: String, program: String) -> Result<String> {
+pub fn write_bin(name: String, program: String) -> Option<String> {
     // Up until here the generations have been parsed and we sampled the ones we want.
     // In here we will write each correct sampled generation onto the `bin` dir.
+
+    // Remove problem comments (keep main to compile only)
+    let program: String = program
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("//") || trimmed.is_empty() {
+                None
+            } else {
+                Some(line)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
 
     // Create binary path as: projroot/src/bin/<name>.rs
     let bin_path = Path::new("./bin/").join(name.clone() + ".rs");
     if let Some(parent) = bin_path.parent() {
-        fs::create_dir_all(parent)?; // src/bin/
+        fs::create_dir_all(parent).ok()?; // src/bin/
     }
-    fs::write(&bin_path, program)?;
+    fs::write(&bin_path, program).ok()?;
 
     // If success we return the path of the binary file
-    Ok(bin_path.to_string_lossy().to_string())
+    Some(bin_path.to_string_lossy().to_string())
 }
 
 pub fn write_mir_augmented(bin_path: String, mir_map: HashMap<i32, Vec<String>>) {
@@ -41,28 +55,31 @@ pub fn write_mir_augmented(bin_path: String, mir_map: HashMap<i32, Vec<String>>)
     let reader = BufReader::new(source_file);
     let mut output_file = File::create(&dest_path).expect("Could not create output file");
 
-    // Write prompt from Prompt.txt
     let prompt_path = Path::new("Prompt.txt");
     let prompt_contents = fs::read_to_string(prompt_path).expect("Could not read Prompt.txt");
-    writeln!(output_file, "{}", prompt_contents).unwrap();
+    // writeln!(output_file, "{}", prompt_contents).unwrap();
 
-    // Write Rust code block header
-    writeln!(output_file, "```rust").unwrap();
-
+    // writeln!(output_file, "```rust").unwrap();
+    let mut line_number = 0;
     for (idx, line_result) in reader.lines().enumerate() {
-        let line_number = (idx + 1) as i32;
         let line = line_result.expect("Could not read line from source");
         let trimmed = line.trim_start();
 
-        // Skip comments
-        if trimmed.starts_with("//") || trimmed.starts_with("///") || trimmed.starts_with("/*!") {
+        // skip comments in the original script
+        if trimmed.len() == 0
+            || trimmed.starts_with("//")
+            || trimmed.starts_with("///")
+            || trimmed.starts_with("/*!")
+        {
             continue;
         }
 
-        // Stop before fn main()
+        // stop before main() as it only contains the assertions
         if trimmed.starts_with("fn main()") {
             break;
         }
+
+        line_number += 1;
 
         // Get indentation
         let indent = &line[..line.len() - trimmed.len()];
@@ -86,7 +103,7 @@ pub fn write_mir_augmented(bin_path: String, mir_map: HashMap<i32, Vec<String>>)
     }
 
     // Close rust code block
-    writeln!(output_file, "```").unwrap();
+    // writeln!(output_file, "```").unwrap();
 
     println!("{} {}", "[MIR AUGMENTED]".green(), dest_path.display());
 }

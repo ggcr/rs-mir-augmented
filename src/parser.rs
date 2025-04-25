@@ -3,11 +3,11 @@ use polars::{frame::DataFrame, prelude::*};
 use regex::Regex;
 use std::{collections::HashMap, fs::read_to_string, path::Path};
 
-pub fn parse_gen(path: &Path) -> Result<DataFrame> {
+pub fn parse_gen(path: &Path) -> Option<DataFrame> {
     // Parse the JSON
     let mut file = std::fs::File::open(path).unwrap();
-    let df = JsonReader::new(&mut file).finish()?;
-    Ok(df)
+    let df = JsonReader::new(&mut file).finish().ok()?;
+    Some(df)
 }
 
 pub fn parse_mir(mir_file: &String) -> HashMap<i32, Vec<String>> {
@@ -47,6 +47,10 @@ fn get_loc_range(comment: Option<&str>) -> Option<(i32, i32)> {
 
     let start = caps.get(1)?.as_str().parse::<i32>().ok()?;
     let end = caps.get(2)?.as_str().parse::<i32>().ok()?;
+    if start != end {
+        // Avoid repeated lines
+        return None;
+    }
 
     Some((start, end))
 }
