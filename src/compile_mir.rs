@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 // TODO: Define an enum for our own custom error type
 // Success, Warning, Error
